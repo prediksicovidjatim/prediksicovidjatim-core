@@ -6,11 +6,12 @@ import math
 from lmfit import Model, Parameters
         
 class KabkoData:
-    def __init__(self, kabko, text, population, outbreak_shift, first_positive, seed, data, kapasitas_rs, rt, params):
+    def __init__(self, kabko, text, population, outbreak_shift, first_positive, seed, scored, data, kapasitas_rs, rt, params):
         self.kabko = kabko
         self.text = text
         self.population = population
         self.last_outbreak_shift = outbreak_shift
+        self.scored = True if scored else False
         
         self.set_params(params)
         self.set_data(data)

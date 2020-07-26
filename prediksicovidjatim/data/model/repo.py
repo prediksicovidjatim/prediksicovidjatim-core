@@ -127,7 +127,11 @@ def _get_kabko(kabko, cur):
             population,
             outbreak_shift,
             fpd.tanggal AS first_positive,
-            rcd.pos_total AS seed
+            rcd.pos_total AS seed,	
+            CASE WHEN k.kabko IN (
+                SELECT DISTINCT s.kabko
+                FROM main.scores s
+            ) THEN 1 ELSE 0 END AS scored
         FROM main.kabko k, main.first_pos_date fpd, main.raw_covid_data rcd
         WHERE k.kabko=fpd.kabko AND k.kabko=rcd.kabko AND rcd.tanggal=fpd.tanggal AND k.kabko=%s
     """, (kabko,))

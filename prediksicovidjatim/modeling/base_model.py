@@ -48,7 +48,7 @@ class BaseModel:
         return ret
         
     
-    def fit(self, method="leastsq", test_splits=[5,3], unvary=[], outbreak_shift=None, sigma_conf=2, sigma_pred=None):#, **kwargs):
+    def fit(self, method="leastsq", test_splits=[5,3], unvary=[], outbreak_shift=None, sigma_conf=2, sigma_pred=None, first_time=False):#, **kwargs):
         if len([x for x in test_splits if x <= 1]) > 0:
             raise ValueError("A split must be at least 2")
         if sigma_pred is None:
@@ -94,7 +94,8 @@ class BaseModel:
         #full_index = np.linspace(0, len_y_0_0 - 1, len_y_0_0, dtype=int)
         #empty_index = np.array([], dtype=int)
         
-        
+        if first_time and len(test_splits) > 0:
+            fit_result = self.____fit(mod, x_range_0, y_data_0, params, days=days, method=method)#, **kwargs)
         
         for i in test_splits:
             results = self._fit(mod, y_data_0, params, util.time_series_split(y_data_0_0, i), method=method, sigma_conf=sigma_conf, sigma_pred=sigma_pred, nvarys=nvarys)#, **kwargs)
