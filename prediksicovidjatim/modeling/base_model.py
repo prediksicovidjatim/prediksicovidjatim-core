@@ -18,7 +18,7 @@ class BaseModel:
         self.last_result_full = None
         self.last_result = None
         self.last_result_flat = None
-        self.datasets = ["infectious", "critical_cared", "recovered", "dead"]
+        self.datasets = ["critical_cared", "infectious_all", "recovered", "dead"]
         
     def use_datasets(self, datasets):
         for dataset in datasets:
