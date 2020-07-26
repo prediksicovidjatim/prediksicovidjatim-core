@@ -6,19 +6,19 @@ from .base_model import BaseModel
 import math
 
 class SeicrdRlcModelResult:
-    def __init__(self, t, population, susceptible, exposed_normal, exposed_over, infectious, critical, recovered_normal, recovered_critical, dead_normal, dead_over, mortality_rate, r0_normal, kapasitas_rs, r0_over, r0_overall, test_coverage):
+    def __init__(self, t, population, susceptible, exposed_normal, exposed_over, infectious, critical, recovered_normal, recovered_critical, dead_normal, dead_over, mortality_rate, r0_normal, kapasitas_rs, r0_over, r0_overall, test_coverage, sanity_check_mode=util.SANITY_CHECK_CORRECT):
         self.t = t
         self.population = population
         self.susceptible = susceptible
-        self.exposed_normal = exposed_normal
-        self.exposed_over = exposed_over
-        self.infectious = infectious
-        self.critical = critical
-        self.recovered_normal = recovered_normal
-        self.recovered_critical = recovered_critical
-        self.dead_normal = dead_normal
-        self.dead_over = dead_over
-        self.mortality_rate = mortality_rate
+        self.exposed_normal = util.sanity_clamp(exposed_normal, sanity_check_mode)
+        self.exposed_over = util.sanity_clamp(exposed_over, sanity_check_mode)
+        self.infectious = util.sanity_clamp(infectious, sanity_check_mode)
+        self.critical = util.sanity_clamp(critical, sanity_check_mode)
+        self.recovered_normal = util.sanity_clamp(recovered_normal, sanity_check_mode)
+        self.recovered_critical = util.sanity_clamp(recovered_critical, sanity_check_mode)
+        self.dead_normal = util.sanity_clamp(dead_normal, sanity_check_mode)
+        self.dead_over = util.sanity_clamp(dead_over, sanity_check_mode)
+        self.mortality_rate = util.sanity_clamp(mortality_rate, sanity_check_mode)
         self.r0_normal = r0_normal
         self.kapasitas_rs = kapasitas_rs
         self.r0_over = r0_over
@@ -183,11 +183,18 @@ class SeicrdRlcModel(BaseModel):
                     critical_rate, critical_chance, 
                     recovery_rate_normal, recovery_rate_critical, 
                     death_rate_normal, death_chance_normal, 
-                    death_rate_over, death_chance_over, kapasitas_rs):
+                    death_rate_over, death_chance_over, kapasitas_rs, 
+                    sanity_check_mode=util.SANITY_CHECK_CORRECT):
                     
+        '''
+        if sanity_check_mode != util.SANITY_CHECK_IGNORE:
+            print("Nonzero sanity check")
+        '''
         population_y, susceptible, exposed_normal, exposed_over, infectious, critical, recovered_normal, recovered_critical, dead_normal, dead_over = y
+        
         y_name = ("population", "susceptible", "exposed_normal", "exposed_over", "infectious", "critical", "recovered_normal", "recovered_critical", "dead_normal", "dead_over")
-        population_y, susceptible, exposed_normal, exposed_over, infectious, critical, recovered_normal, recovered_critical, dead_normal, dead_over = [util.sanity_check_init(*args) for args in zip(y_name, y)]
+        if sanity_check_mode:
+            population_y, susceptible, exposed_normal, exposed_over, infectious, critical, recovered_normal, recovered_critical, dead_normal, dead_over = [util.sanity_check_init(*args, sanity_check_mode) for args in zip(y_name, y)]
         
         exposed_flow_normal = exposed_rate_normal(t) * susceptible * infectious / population
         
@@ -226,8 +233,10 @@ class SeicrdRlcModel(BaseModel):
             raise Exception("There can't be death_flow_over if critical_cared is below kapasitas_rs_val")
         
         flow = exposed_flow_normal, exposed_flow_over, infectious_flow_normal, infectious_flow_over, recovery_flow_normal, recovery_flow_critical, death_flow_normal, death_flow_over, critical_flow
-        flow_name = ("exposed_flow_normal", "exposed_flow_over", "infectious_flow_normal", "infectious_flow_over", "recovery_flow_normal", "recovery_flow_critical", "death_flow_normal", "death_flow_over", "critical_flow")
-        exposed_flow_normal, exposed_flow_over, infectious_flow_normal, infectious_flow_over, recovery_flow_normal, recovery_flow_critical, death_flow_normal, death_flow_over, critical_flow = [util.sanity_check_flow(*args) for args in zip(flow_name, flow)]
+        
+        if sanity_check_mode:
+            flow_name = ("exposed_flow_normal", "exposed_flow_over", "infectious_flow_normal", "infectious_flow_over", "recovery_flow_normal", "recovery_flow_critical", "death_flow_normal", "death_flow_over", "critical_flow")
+            exposed_flow_normal, exposed_flow_over, infectious_flow_normal, infectious_flow_over, recovery_flow_normal, recovery_flow_critical, death_flow_normal, death_flow_over, critical_flow = [util.sanity_check_flow(*args, sanity_check_mode) for args in zip(flow_name, flow)]
         
         dSdt = -exposed_flow_normal - exposed_flow_over
         dENdt = exposed_flow_normal - infectious_flow_normal
@@ -245,7 +254,8 @@ class SeicrdRlcModel(BaseModel):
         '''
         dydt = dPdt, dSdt, dENdt, dEOdt, dIdt, dCdt, dRNdt, dRCdt, dDNdt, dDOdt
         
-        check_result = [util.sanity_check_y(*args) for args in zip(y_name, y, dydt)]
+        if sanity_check_mode:
+            y1 = [util.sanity_check_y(*args, sanity_check_mode) for args in zip(y_name, y, dydt)]
         
         self.prev_dydt = dict(zip(y_name, dydt))
         
@@ -258,7 +268,12 @@ class SeicrdRlcModel(BaseModel):
                     death_chance_over, death_rate_over, 
                     exposed_rate_over, k, kapasitas_rs_mul,
                     test_coverage_0, test_coverage_increase, test_coverage_max,
+                    sanity_check_mode=util.SANITY_CHECK_CORRECT,
                     **kwargs):
+        '''
+        if sanity_check_mode != util.SANITY_CHECK_IGNORE:
+            print("Nonzero sanity check")
+        '''
         days = int(days)
         #unpack rt values
         rt_values = self.kabko.get_kwargs_rt(kwargs)
@@ -339,7 +354,8 @@ class SeicrdRlcModel(BaseModel):
             recovery_rate_normal, recovery_rate_critical, 
             death_rate_normal, death_chance_normal, 
             death_rate_over, death_chance_over,
-            kapasitas_rs
+            kapasitas_rs,
+            sanity_check_mode
         ))
         retT = ret.T
         '''
@@ -373,7 +389,7 @@ class SeicrdRlcModel(BaseModel):
         #r0_normal_val = np.zeros(days)
         #r0_over_val = np.zeros(days)
         
-        return SeicrdRlcModelResult(t, population_2, susceptible, exposed_normal, exposed_over, infectious, critical, recovered_normal, recovered_critical, dead_normal, dead_over, mortality_rate_val, r0_normal_val, kapasitas_rs_val, r0_over_val, r0_overall_val, test_coverage_val)
+        return SeicrdRlcModelResult(t, population_2, susceptible, exposed_normal, exposed_over, infectious, critical, recovered_normal, recovered_critical, dead_normal, dead_over, mortality_rate_val, r0_normal_val, kapasitas_rs_val, r0_over_val, r0_overall_val, test_coverage_val, sanity_check_mode)
         
     
     def _fitter(self, ret):

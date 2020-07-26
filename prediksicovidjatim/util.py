@@ -27,31 +27,45 @@ def chunks(lst, n):
     #https://stackoverflow.com/a/312464
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
+        
+SANITY_CHECK_IGNORE = 0
+SANITY_CHECK_CORRECT = 1
+SANITY_CHECK_ERROR = 2
 
-def sanity_check_init(name, y):
-    if y < 0:
-        if math.isclose(y, 0, abs_tol=config.FLOAT_TOLERANCE):
-            return 0
+def sanity_clamp(arr, mode=SANITY_CHECK_CORRECT):
+    if mode == SANITY_CHECK_IGNORE:
+        return arr
+    elif mode == SANITY_CHECK_CORRECT:
+        return np.clip(arr, 0, None)
+    elif mode == SANITY_CHECK_ERROR:
+        if (arr < 0).any():
+            raise Exception("%s can't be negative. (%f, %f)" % (name, y, config.FLOAT_TOLERANCE))
         else:
-            pass
-            #raise Exception("%s can't be negative. (%f, %f)" % (name, y, config.FLOAT_TOLERANCE))
-    return y if y >= 0 else 0
+            return arr
+    raise ValueError("Invalid mode")
+
+def sanity_check_init(name, y, mode=SANITY_CHECK_CORRECT):
+    if mode==SANITY_CHECK_IGNORE or y >= 0:
+        return y
+    elif math.isclose(y, 0, abs_tol=config.FLOAT_TOLERANCE):
+        return y
+    elif mode==SANITY_CHECK_CORRECT:
+        return 0
+    elif mode==SANITY_CHECK_ERROR:
+        raise Exception("%s can't be negative. (%f, %f)" % (name, y, config.FLOAT_TOLERANCE))
+    raise ValueError("Invalid mode")
     
-def sanity_check_flow(name, flow):
-    if flow < 0:
-        if math.isclose(flow, 0, abs_tol=config.FLOAT_TOLERANCE):
-            return 0
-        else:
-            raise Exception("%s can't be negative. (%f, %f)" % (name, flow, config.FLOAT_TOLERANCE))
-    return flow
+def sanity_check_flow(name, flow, mode=SANITY_CHECK_CORRECT):
+    return sanity_check_init(name, flow, mode)
     
-def sanity_check_y(name, y, dy):
+def sanity_check_y(name, y, dy, mode=SANITY_CHECK_CORRECT):
     y1 = y+dy
-    if y1 < 0:
-        if math.isclose(y1, 0, abs_tol=config.FLOAT_TOLERANCE):
-            pass
-        else:
-            raise Exception("%s can't flow more than source. (%f+%f=%f, %f)" % (name, y, dy, y1, config.FLOAT_TOLERANCE))
+    try:
+        return sanity_check_init(name, y1, mode)
+    except ValueError:
+        raise
+    except Exception:
+        raise Exception("%s can't flow more than source. (%f+%f=%f, %f)" % (name, y, dy, y1, config.FLOAT_TOLERANCE))
     
 def parse_int(text):
     if not text:

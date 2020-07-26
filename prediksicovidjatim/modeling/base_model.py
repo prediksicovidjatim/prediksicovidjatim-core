@@ -37,7 +37,7 @@ class BaseModel:
         return results_flat[x]
         
     def objective(self, params, x, data):
-        pred = self.fitter(**params)
+        pred = self.fitter(**params, sanity_check_mode=util.SANITY_CHECK_IGNORE)
         #length = len(data[0])
         #pred = np.array([p[:length] for p in pred])
         pred = np.array([p[x[0]:x[1]] for p in pred])
@@ -194,7 +194,7 @@ class BaseModel:
         return BaseScorer(y_data_test, pred_data_test, dely_conf_test, dely_pred_test, nvarys, util.np_mean_2d(y_data_train), x=ts_index)
         
     '''
-    def _get_dely_model(self, fit_result, x_data, set_count, sigma_conf=2, sigma_pred=None):
+    def _get_dely(self, fit_result, x_data, set_count, sigma_conf=2, sigma_pred=None):
         if sigma_pred is None:
             sigma_pred=sigma_conf
         dely_conf = fit_result.eval_uncertainty(x=x_data, sigma=sigma_conf)
