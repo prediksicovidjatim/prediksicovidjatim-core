@@ -237,7 +237,7 @@ def _update_kabko(kabko, outbreak_shift, tanggal, cur):
     else:
         cur.execute("""
             UPDATE main.kabko
-            SET outbreak_shift=%s, last_fit=current_date()
+            SET outbreak_shift=%s, last_fit=current_date
             WHERE kabko=%s
         """, (outbreak_shift, kabko,))
     

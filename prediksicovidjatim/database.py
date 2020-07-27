@@ -28,7 +28,8 @@ class Database:
         except:
             raise
         finally:
-            self.conn_pool.putconn(conn, key)
+            if conn:
+                self.conn_pool.putconn(conn, key)
             
     def put_conn(self, conn, key=None):
         return self.conn_pool.putconn(conn, key)
