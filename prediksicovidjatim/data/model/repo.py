@@ -3,6 +3,24 @@ from ..model.entities import KabkoData, DayData, ParamData, RtData
 from ..raw.repo import fetch_kabko, fetch_kabko_dict, get_latest_tanggal, get_oldest_tanggal
 from ...modeling import BaseModel
 
+
+def fetch_kabko_need_fitting(tanggal, cur=None):
+    if cur:
+        return _fetch_kabko_need_fitting(tanggal, cur)
+    else:
+        with database.get_conn() as conn, conn.cursor() as cur:
+            return _fetch_kabko_need_fitting(tanggal, cur)
+            
+def _fetch_kabko_need_fitting(tanggal, cur):
+    cur.execute("""
+        SELECT k.kabko
+        FROM main.kabko k
+        WHERE k.last_fit<%s
+        ORDER BY k.kabko
+    """, (tanggal,))
+    
+    return [x for x, in cur.fetchall()]
+
 def fetch_kabko_scored(cur=None):
     if cur:
         return _fetch_kabko_scored(cur)
@@ -202,19 +220,26 @@ def _update_rt_init(kabko, rts, cur):
     )
     cur.execute("DEALLOCATE update_rt_init")
     
-def update_outbreak_shift(kabko, outbreak_shift, cur=None):
+def update_kabko(kabko, outbreak_shift, tanggal=None, cur=None):
     if cur:
-        return _update_outbreak_shift(kabko, outbreak_shift, cur)
+        return _update_kabko(kabko, outbreak_shift, tanggal, cur)
     else:
         with database.get_conn() as conn, conn.cursor() as cur:
-            return _update_outbreak_shift(kabko, outbreak_shift, cur)
+            return _update_kabko(kabko, outbreak_shift, tanggal, cur)
             
-def _update_outbreak_shift(kabko, outbreak_shift, cur):
-    cur.execute("""
-        UPDATE main.kabko
-        SET outbreak_shift=%s
-        WHERE kabko=%s
-    """, (outbreak_shift, kabko,))
+def _update_kabko(kabko, outbreak_shift, tanggal, cur):
+    if tanggal:
+        cur.execute("""
+            UPDATE main.kabko
+            SET outbreak_shift=%s, last_fit=%s
+            WHERE kabko=%s
+        """, (outbreak_shift, tanggal, kabko,))
+    else:
+        cur.execute("""
+            UPDATE main.kabko
+            SET outbreak_shift=%s, last_fit=current_date()
+            WHERE kabko=%s
+        """, (outbreak_shift, kabko,))
     
 score_columns = ["residual_mean", "residual_median", "max_error", "mae", "mse", "rmse", "rmsle", "explained_variance", "r2", "r2_adj", "smape", "mase", "chi2", "redchi", "aic", "aicc", "bic", "dw", "residual_normal", "residual_runs", "pearson_data", "pearson_residual", "f_mean", "f_data", "f_residual", "ks_data", "ks_residual", "prediction_interval"]
 score_columns_2 = ["nvarys"] + score_columns
@@ -267,7 +292,7 @@ def _init_weights(cur):
     weights = dict(cur.fetchall())
     BaseModel.dataset_weights = weights
     
-def save_fitting_result(fit_result, option="seicrd_rlc"):
+def save_fitting_result(fit_result, tanggal=None, option="seicrd_rlc"):
     params_needed = KabkoData.get_params_needed(option)
     params = fit_result.fit_result.params
     kabko = fit_result.kabko
@@ -278,7 +303,7 @@ def save_fitting_result(fit_result, option="seicrd_rlc"):
     with database.get_conn() as conn, conn.cursor() as cur:
         update_params_init(kabko.kabko, filtered_params, cur)
         update_rt_init(kabko.kabko, rts, cur)
-        update_outbreak_shift(kabko.kabko, outbreak_shift, cur)
+        update_kabko(kabko.kabko, outbreak_shift, tanggal, cur)
         update_scores(kabko.kabko, fit_result.datasets, fit_result.fit_scorer, False, cur)
         update_scores(kabko.kabko, ["flat"], fit_result.fit_scorer.flatten(), False, cur)
         if fit_result.test_scorer:

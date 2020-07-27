@@ -3,6 +3,32 @@ from .entities import MapDataReal
 from ..model.repo import get_kabko_full
 from ..raw.repo import fetch_kabko, fetch_kabko_dict, get_latest_tanggal, get_oldest_tanggal
 
+def fetch_kabko_need_mapping(tanggal, cur=None):
+    if cur:
+        return _fetch_kabko_need_mapping(tanggal, cur)
+    else:
+        with database.get_conn() as conn, conn.cursor() as cur:
+            return _fetch_kabko_need_mapping(tanggal, cur)
+            
+def _fetch_kabko_need_mapping(tanggal, cur):
+    if tanggal:
+        cur.execute("""
+            SELECT k.kabko
+            FROM main.kabko k
+            WHERE k.last_map<%s
+            ORDER BY k.kabko
+        """, (tanggal,))
+    else:
+        cur.execute("""
+            SELECT k.kabko
+            FROM main.kabko k
+            WHERE k.last_map<k.last_fit
+            ORDER BY k.kabko
+        """)
+        
+    
+    return [x for x, in cur.fetchall()]
+    
 def fetch_real_data(kabko, cur=None):
     if cur:
         return _fetch_real_data(kabko, cur)
@@ -31,3 +57,25 @@ def _fetch_real_data(kabko, cur):
     
     return [MapDataReal(*args) for args in cur.fetchall()]
     
+def set_updated(kabko, tanggal, cur=None):
+    if cur:
+        return _set_updated(kabko, tanggal, cur)
+    else:
+        with database.get_conn() as conn, conn.cursor() as cur:
+            return _set_updated(kabko, tanggal, cur)
+            
+def _set_updated(kabko, tanggal, cur):
+    template = util.mogrify_value_template(len(kabko))
+    #tup = tuple("'%s'" % k for k in kabko)
+    if tanggal:
+        cur.execute("""
+            UPDATE main.kabko
+            SET last_map=%s
+            WHERE kabko IN %s
+        """ % ("%s", template), (tanggal, *kabko))
+    else:
+        cur.execute("""
+            UPDATE main.kabko
+            SET last_map=last_fit
+            WHERE kabko IN %s
+        """ % (template,), kabko)

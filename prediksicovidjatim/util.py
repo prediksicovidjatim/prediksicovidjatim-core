@@ -23,6 +23,11 @@ def use_multiprocess():
         #return 'terminal'
         return False
 
+if use_multiprocess():
+    from multiprocess import Pool
+else:
+    from multiprocessing import Pool
+    
 def chunks(lst, n):
     #https://stackoverflow.com/a/312464
     for i in range(0, len(lst), n):

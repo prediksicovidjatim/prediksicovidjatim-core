@@ -1,2 +1,1 @@
-build
 pip install -e .

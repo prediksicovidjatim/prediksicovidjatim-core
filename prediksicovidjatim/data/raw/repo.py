@@ -35,15 +35,40 @@ value_cols.remove("tanggal")
 value_cols.remove("kabko")
 non_zero_filter = " OR ".join(["%s<>0" % col for col in value_cols])
         
-def get_oldest_tanggal(kabko):
-    global non_zero_filter
-    with database.get_conn() as conn, conn.cursor() as cur:
+def get_oldest_tanggal(kabko, cur=None):
+    if cur:
+        return _get_oldest_tanggal(kabko, cur)
+    else:
+        with database.get_conn() as conn, conn.cursor() as cur:
+            return _get_oldest_tanggal(kabko, cur)
+            
+def _get_oldest_tanggal(kabko, cur):
+    if kabko:
         cur.execute("""
             SELECT min(tanggal) FROM main.raw_covid_data
             WHERE kabko=%s AND (%s)
         """ % ("%s", non_zero_filter), (kabko,))
+    else:
+        cur.execute("""
+            SELECT min(tanggal) FROM main.raw_covid_data
+            WHERE (%s)
+        """ % (non_zero_filter,))
+    
+    return cur.fetchone()[0]
         
-        return cur.fetchone()[0]
+def get_latest_tanggal(cur=None):
+    if cur:
+        return _get_latest_tanggal(cur)
+    else:
+        with database.get_conn() as conn, conn.cursor() as cur:
+            return _get_latest_tanggal(cur)
+            
+def _get_latest_tanggal(cur):
+    cur.execute("""
+        SELECT max(tanggal) FROM main.raw_covid_data
+    """)
+    
+    return cur.fetchone()[0]
         
 def trim_early_zeros():
     global non_zero_filter
@@ -61,13 +86,6 @@ def trim_early_zeros():
         
         return cur.rowcount
     
-def get_latest_tanggal():
-    with database.get_conn() as conn, conn.cursor() as cur:
-        cur.execute("""
-            SELECT max(tanggal) FROM main.raw_covid_data
-        """)
-        
-        return cur.fetchone()[0]
     
 def fetch_kabko(cur=None):
     if cur:
