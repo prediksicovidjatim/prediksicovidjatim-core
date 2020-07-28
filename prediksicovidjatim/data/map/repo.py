@@ -3,15 +3,21 @@ from .entities import MapDataReal
 from ..model.repo import get_kabko_full
 from ..raw.repo import fetch_kabko, fetch_kabko_dict, get_latest_tanggal, get_oldest_tanggal
 
-def fetch_kabko_need_mapping(tanggal, cur=None):
+def fetch_kabko_need_mapping(tanggal, any=False, cur=None):
     if cur:
-        return _fetch_kabko_need_mapping(tanggal, cur)
+        return _fetch_kabko_need_mapping(tanggal, any, cur)
     else:
         with database.get_conn() as conn, conn.cursor() as cur:
-            return _fetch_kabko_need_mapping(tanggal, cur)
+            return _fetch_kabko_need_mapping(tanggal, any, cur)
             
-def _fetch_kabko_need_mapping(tanggal, cur):
-    if tanggal:
+def _fetch_kabko_need_mapping(tanggal, any, cur):
+    if any:
+        cur.execute("""
+            SELECT k.kabko, k.map_chunk_size
+            FROM main.kabko k
+            ORDER BY k.kabko
+        """)
+    elif tanggal:
         cur.execute("""
             SELECT k.kabko, k.map_chunk_size
             FROM main.kabko k
