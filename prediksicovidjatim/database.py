@@ -32,6 +32,7 @@ class Database:
                 yield conn
             '''
             yield conn
+            conn.commit()
         except:
             raise
         finally:

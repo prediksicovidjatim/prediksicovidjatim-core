@@ -57,7 +57,7 @@ def _fetch_real_data(kabko, cur):
     
     return [MapDataReal(*args) for args in cur.fetchall()]
     
-def set_updated(kabko, tanggal, chunk_size=100, cur=None):
+def set_updated(kabko, tanggal, chunk_size=None, cur=None):
     if cur:
         return _set_updated(kabko, tanggal, chunk_size, cur)
     else:
@@ -69,12 +69,14 @@ def _set_updated(kabko, tanggal, chunk_size, cur):
     #tup = tuple("'%s'" % k for k in kabko)
     if tanggal:
         if chunk_size:
+            print("SET UPDATED 1")
             cur.execute("""
                 UPDATE main.kabko
                 SET last_map=%s, map_chunk_size=%s
                 WHERE kabko = %s
             """, (tanggal, chunk_size, kabko))
         else:
+            print("SET UPDATED 2")
             cur.execute("""
                 UPDATE main.kabko
                 SET last_map=%s
@@ -82,12 +84,14 @@ def _set_updated(kabko, tanggal, chunk_size, cur):
             """, (tanggal, kabko))
     else:
         if chunk_size:
+            print("SET UPDATED 3. %s, %s, %s" % (kabko, str(tanggal), str(chunk_size)))
             cur.execute("""
                 UPDATE main.kabko
                 SET last_map=last_fit, map_chunk_size=%s
                 WHERE kabko = %s
             """, (chunk_size, kabko))
         else:
+            print("SET UPDATED 4")
             cur.execute("""
                 UPDATE main.kabko
                 SET last_map=last_fit

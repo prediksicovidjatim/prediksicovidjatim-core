@@ -126,7 +126,6 @@ class MapUpdater:
     '''
         
         
-    @lprofile
     def to_update(self, features, updates):
         
         updates_dict = {u.tanggal_ms():u for u in updates}
@@ -135,7 +134,6 @@ class MapUpdater:
         
         return list(to_update.values()), set(to_update.keys())
         
-    @lprofile
     def to_append(self, appends, geometry, update_keys=None, features=None, free_features=True):
         if update_keys is None:
             if features is None:
@@ -149,7 +147,6 @@ class MapUpdater:
         to_append = self.make_features([a.to_dict() for a in appends], geometry)
         return to_append
         
-    @lprofile
     def to_save(self, layer, kabko, to_save, update=True):
         
         geometry = self.get_kabko_geometry(layer, kabko)
@@ -171,7 +168,6 @@ class MapUpdater:
         #gc.collect()
         return len(val)
         
-    @lprofile
     def _save(self, layer, to_save, update, chunk_size=100, max_process_count=None, max_tasks_per_child=100):
         chunk_size = chunk_size or self.chunk_size
         done = 0
@@ -210,7 +206,6 @@ class MapUpdater:
                 pass
         
         
-    @lprofile
     def save(self, layer, kabko, to_save, update=True, chunk_size=100, max_process_count=None, max_tasks_per_child=100):
         
         geometry = self.get_kabko_geometry(layer, kabko)
