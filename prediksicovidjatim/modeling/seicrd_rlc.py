@@ -346,17 +346,20 @@ class SeicrdRlcModel(BaseModel):
         
         # Integrate the SIR equations over the time grid, t.
         t = np.linspace(0, days-1, days) # days
-        ret = odeint(self.deriv, y0, t, args=(
-            population,
-            exposed_rate_normal, exposed_rate_over, 
-            infectious_rate, 
-            critical_rate, critical_chance, 
-            recovery_rate_normal, recovery_rate_critical, 
-            death_rate_normal, death_chance_normal, 
-            death_rate_over, death_chance_over,
-            kapasitas_rs,
-            sanity_check_mode
-        ))
+        
+        with util.odeint_lock:
+            ret = odeint(self.deriv, y0, t, args=(
+                population,
+                exposed_rate_normal, exposed_rate_over, 
+                infectious_rate, 
+                critical_rate, critical_chance, 
+                recovery_rate_normal, recovery_rate_critical, 
+                death_rate_normal, death_chance_normal, 
+                death_rate_over, death_chance_over,
+                kapasitas_rs,
+                sanity_check_mode
+            ))
+            
         retT = ret.T
         '''
         sol = solve_ivp(self.deriv, (0,days-1), y0, dense_output=True, args=(

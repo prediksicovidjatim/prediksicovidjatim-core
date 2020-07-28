@@ -8,10 +8,15 @@ from operator import add
 from sklearn.model_selection import TimeSeriesSplit
 from . import config
 import calendar
+from threading import RLock
 import line_profiler
 lprofile = line_profiler.LineProfiler()
 #import atexit
 #atexit.register(lprofile.print_stats)
+
+odeint_lock = RLock()
+lmfit_lock = RLock()
+
 
 def use_multiprocess():
     try:

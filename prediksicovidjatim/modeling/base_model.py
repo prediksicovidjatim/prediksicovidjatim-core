@@ -205,9 +205,10 @@ class BaseModel:
     def _get_dely(self, minimizer, params, covar, x_data, set_count, sigma_conf=2, sigma_pred=None):
         if sigma_pred is None:
             sigma_pred=sigma_conf
-        dely_conf = minimizer.eval_uncertainty(params, covar, x=x_data, sigma=sigma_conf)
-        dely_pred = minimizer.eval_uncertainty(params, covar, x=x_data, sigma=sigma_pred, predict=True)
-        return util.np_split(dely_conf, set_count), util.np_split(dely_pred, set_count)
+        with util.lmfit_lock:
+            dely_conf = minimizer.eval_uncertainty(params, covar, x=x_data, sigma=sigma_conf)
+            dely_pred = minimizer.eval_uncertainty(params, covar, x=x_data, sigma=sigma_pred, predict=True)
+            return util.np_split(dely_conf, set_count), util.np_split(dely_pred, set_count)
     
         
     def ____fit(self, mod, x_range, y_data, params, days=None, method="leastsq"):#, **kwargs):
@@ -225,7 +226,9 @@ class BaseModel:
             "data": y_data
         }
         mod.userkws = kws
-        fit_result = mod.minimize(params=params, method=method)#, **kwargs)
+        
+        with util.lmfit_lock:
+            fit_result = mod.minimize(params=params, method=method)#, **kwargs)
         
         #set back params
         for k, v in fit_result.params.items():
