@@ -1,7 +1,7 @@
 import os
 from requests_html import HTMLSession
 from ... import util
-from ...util import Pool
+from ...util import ThreadPool
 from .entities import Params, RawData
 from dotenv import load_dotenv
 load_dotenv()
@@ -95,7 +95,7 @@ class Scrapper:
         return RawData(**vals)
     
     
-    def scrap_bulk(self, kabko, tanggal, max_process_count=6, max_tasks_per_child=100, pool=None):
+    def scrap_bulk(self, kabko, tanggal, max_process_count=None, max_tasks_per_child=100, pool=None):
         
         #we might not need this after all, but whatever
         #data = {k:{t:None for t in tanggal} for k in kabko}
@@ -109,7 +109,8 @@ class Scrapper:
         
         #we prepare the pool
         #pool in this context is like collection of available tabs
-        pool = pool or Pool(processes=max_process_count, maxtasksperchild=max_tasks_per_child)
+        #pool = pool or Pool(processes=max_process_count, maxtasksperchild=max_tasks_per_child)
+        pool = pool or ThreadPool(processes=util.min_none(len(args), max_process_count))
 
         #now we execute it
         #we use starmap instead of map because there are multiple arguments

@@ -8,6 +8,10 @@ from operator import add
 from sklearn.model_selection import TimeSeriesSplit
 from . import config
 import calendar
+import line_profiler
+lprofile = line_profiler.LineProfiler()
+#import atexit
+#atexit.register(lprofile.print_stats)
 
 def use_multiprocess():
     try:
@@ -27,6 +31,15 @@ if use_multiprocess():
     from multiprocess import Pool
 else:
     from multiprocessing import Pool
+    
+from multiprocessing.pool import ThreadPool
+'''
+def max_none(a, b):
+    return a if b is None else max(a, b)
+'''
+def min_none(a, b):
+    return a if b is None else min(a, b)
+    
     
 def chunks(lst, n):
     #https://stackoverflow.com/a/312464

@@ -13,21 +13,21 @@ def fetch_kabko_need_mapping(tanggal, cur=None):
 def _fetch_kabko_need_mapping(tanggal, cur):
     if tanggal:
         cur.execute("""
-            SELECT k.kabko
+            SELECT k.kabko, k.map_chunk_size
             FROM main.kabko k
             WHERE k.last_map<%s
             ORDER BY k.kabko
         """, (tanggal,))
     else:
         cur.execute("""
-            SELECT k.kabko
+            SELECT k.kabko, k.map_chunk_size
             FROM main.kabko k
             WHERE k.last_map<k.last_fit
             ORDER BY k.kabko
         """)
         
     
-    return [x for x, in cur.fetchall()]
+    return list(cur.fetchall())
     
 def fetch_real_data(kabko, cur=None):
     if cur:
@@ -57,25 +57,39 @@ def _fetch_real_data(kabko, cur):
     
     return [MapDataReal(*args) for args in cur.fetchall()]
     
-def set_updated(kabko, tanggal, cur=None):
+def set_updated(kabko, tanggal, chunk_size=100, cur=None):
     if cur:
-        return _set_updated(kabko, tanggal, cur)
+        return _set_updated(kabko, tanggal, chunk_size, cur)
     else:
         with database.get_conn() as conn, conn.cursor() as cur:
-            return _set_updated(kabko, tanggal, cur)
+            return _set_updated(kabko, tanggal, chunk_size, cur)
             
-def _set_updated(kabko, tanggal, cur):
-    template = util.mogrify_value_template(len(kabko))
+def _set_updated(kabko, tanggal, chunk_size, cur):
+    #template = util.mogrify_value_template(len(kabko))
     #tup = tuple("'%s'" % k for k in kabko)
     if tanggal:
-        cur.execute("""
-            UPDATE main.kabko
-            SET last_map=%s
-            WHERE kabko IN %s
-        """ % ("%s", template), (tanggal, *kabko))
+        if chunk_size:
+            cur.execute("""
+                UPDATE main.kabko
+                SET last_map=%s, map_chunk_size=%s
+                WHERE kabko = %s
+            """, (tanggal, chunk_size, kabko))
+        else:
+            cur.execute("""
+                UPDATE main.kabko
+                SET last_map=%s
+                WHERE kabko = %s
+            """, (tanggal, kabko))
     else:
-        cur.execute("""
-            UPDATE main.kabko
-            SET last_map=last_fit
-            WHERE kabko IN %s
-        """ % (template,), kabko)
+        if chunk_size:
+            cur.execute("""
+                UPDATE main.kabko
+                SET last_map=last_fit, map_chunk_size=%s
+                WHERE kabko = %s
+            """, (chunk_size, kabko))
+        else:
+            cur.execute("""
+                UPDATE main.kabko
+                SET last_map=last_fit
+                WHERE kabko = %s
+            """, kabko)

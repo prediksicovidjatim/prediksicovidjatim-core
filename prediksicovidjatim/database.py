@@ -4,6 +4,7 @@ import psycopg2.pool
 from psycopg2.extras import DictCursor, execute_batch
 from contextlib import contextmanager
 from dotenv import load_dotenv
+from threading import Semaphore
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -18,21 +19,28 @@ class Database:
     def init(self, url=None, min=0, max=10):
         self.db_url = url or DATABASE_URL
         self.conn_pool = psycopg2.pool.ThreadedConnectionPool(min, max, self.db_url)
+        self._semaphore = Semaphore(max)
         
     @contextmanager
     def get_conn(self, key=None):
+        conn=None
         try:
+            self._semaphore.acquire()
             conn = self.conn_pool.getconn(key)
+            '''
             with conn:
                 yield conn
+            '''
+            yield conn
         except:
             raise
         finally:
             if conn:
-                self.conn_pool.putconn(conn, key)
+                self.put_conn(conn, key)
             
     def put_conn(self, conn, key=None):
-        return self.conn_pool.putconn(conn, key)
+        self.conn_pool.putconn(conn, key)
+        self._semaphore.release()
         
     def close_all(self):
         return self.conn_pool.closeall()

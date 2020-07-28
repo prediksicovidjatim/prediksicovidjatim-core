@@ -292,7 +292,16 @@ def _init_weights(cur):
     weights = dict(cur.fetchall())
     BaseModel.dataset_weights = weights
     
-def save_fitting_result(fit_result, tanggal=None, option="seicrd_rlc"):
+def save_fitting_result(fit_result, tanggal=None, option="seicrd_rlc", cur=None):
+    if cur:
+        return _save_fitting_result(fit_result, tanggal, option, cur)
+    else:
+        with database.get_conn() as conn, conn.cursor() as cur:
+            ret = _save_fitting_result(fit_result, tanggal, option, cur)
+            conn.commit()
+            return ret 
+        
+def _save_fitting_result(fit_result, tanggal, option, cur):
     params_needed = KabkoData.get_params_needed(option)
     params = fit_result.fit_result.params
     kabko = fit_result.kabko
@@ -300,16 +309,14 @@ def save_fitting_result(fit_result, tanggal=None, option="seicrd_rlc"):
     outbreak_shift = fit_result.outbreak_shift
     rts = kabko.transform_rt_to_dates(kabko.get_kwargs_rt(params, "_r" in option))
     
-    with database.get_conn() as conn, conn.cursor() as cur:
-        update_params_init(kabko.kabko, filtered_params, cur)
-        update_rt_init(kabko.kabko, rts, cur)
-        update_kabko(kabko.kabko, outbreak_shift, tanggal, cur)
-        update_scores(kabko.kabko, fit_result.datasets, fit_result.fit_scorer, False, cur)
-        update_scores(kabko.kabko, ["flat"], fit_result.fit_scorer.flatten(), False, cur)
-        if fit_result.test_scorer:
-            update_scores(kabko.kabko, fit_result.datasets, fit_result.test_scorer, True, cur)
-            update_scores(kabko.kabko, ["flat"], fit_result.test_scorer.flatten(), True, cur)
-        conn.commit()
+    update_params_init(kabko.kabko, filtered_params, cur)
+    update_rt_init(kabko.kabko, rts, cur)
+    update_kabko(kabko.kabko, outbreak_shift, tanggal, cur)
+    update_scores(kabko.kabko, fit_result.datasets, fit_result.fit_scorer, False, cur)
+    update_scores(kabko.kabko, ["flat"], fit_result.fit_scorer.flatten(), False, cur)
+    if fit_result.test_scorer:
+        update_scores(kabko.kabko, fit_result.datasets, fit_result.test_scorer, True, cur)
+        update_scores(kabko.kabko, ["flat"], fit_result.test_scorer.flatten(), True, cur)
         
 
 def fetch_scores(kabko, cur=None):

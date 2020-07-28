@@ -33,19 +33,27 @@ class MapDataReal:
     def tanggal_ms(self):
         return util.date_to_ms(self.tanggal)
         
+    def _apply(self, attributes):
+        attributes["kabko"] = self.kabko
+        attributes["tanggal"] = self.tanggal_ms()
+        attributes["populasi"] = self.populasi
+        attributes["otg"] = self.otg
+        attributes["odp_aktif"] = self.odp_aktif
+        attributes["pdp_aktif"] = self.pdp_aktif
+        attributes["pos_aktif"] = self.pos_aktif
+        attributes["pos_rs"] = self.pos_rs
+        attributes["pos_meninggal"] = self.pos_meninggal
+        attributes["pos_sembuh"] = self.pos_sembuh
+        attributes["pos_total"] = self.pos_total
+        
     def apply(self, feature):
-        feature.attributes["kabko"] = self.kabko
-        feature.attributes["tanggal"] = self.tanggal_ms()
-        feature.attributes["populasi"] = self.populasi
-        feature.attributes["otg"] = self.otg
-        feature.attributes["odp_aktif"] = self.odp_aktif
-        feature.attributes["pdp_aktif"] = self.pdp_aktif
-        feature.attributes["pos_aktif"] = self.pos_aktif
-        feature.attributes["pos_rs"] = self.pos_rs
-        feature.attributes["pos_meninggal"] = self.pos_meninggal
-        feature.attributes["pos_sembuh"] = self.pos_sembuh
-        feature.attributes["pos_total"] = self.pos_total
+        self._apply(feature.attributes)
         return feature
+        
+    def to_dict(self):
+        ret = dict()
+        self._apply(ret)
+        return ret
         
 class MapDataPred:
     def __init__(self, 
@@ -82,21 +90,28 @@ class MapDataPred:
     def tanggal_ms(self):
         return util.date_to_ms(self.tanggal)
         
+    def _apply(self, attributes):
+        attributes["kabko"] = self.kabko
+        attributes["tanggal"] = self.tanggal_ms()
+        attributes["populasi"] = self.populasi
+        attributes["pos_aktif"] = self.pos_aktif
+        attributes["pos_rs"] = self.pos_rs
+        attributes["pos_meninggal"] = self.pos_meninggal
+        attributes["pos_sembuh"] = self.pos_sembuh
+        attributes["pos_total"] = self.pos_total
+        attributes["mortality_rate"] = self.mortality_rate
+        attributes["rt"] = self.rt
+        attributes["kapasitas_rs"] = self.kapasitas_rs
+        attributes["test_coverage"] = self.test_coverage
         
     def apply(self, feature):
-        feature.attributes["kabko"] = self.kabko
-        feature.attributes["tanggal"] = self.tanggal_ms()
-        feature.attributes["populasi"] = self.populasi
-        feature.attributes["pos_aktif"] = self.pos_aktif
-        feature.attributes["pos_rs"] = self.pos_rs
-        feature.attributes["pos_meninggal"] = self.pos_meninggal
-        feature.attributes["pos_sembuh"] = self.pos_sembuh
-        feature.attributes["pos_total"] = self.pos_total
-        feature.attributes["mortality_rate"] = self.mortality_rate
-        feature.attributes["rt"] = self.rt
-        feature.attributes["kapasitas_rs"] = self.kapasitas_rs
-        feature.attributes["test_coverage"] = self.test_coverage
+        self._apply(feature.attributes)
         return feature
+        
+    def to_dict(self):
+        ret = dict()
+        self._apply(ret)
+        return ret
         
     def from_result(kabko, result, shift=None):
         length = len(result.t)
