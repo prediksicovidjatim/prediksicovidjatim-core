@@ -246,7 +246,7 @@ def shift_array(data, shift, preceeding_zero=True, trailing_zero=False, keep_len
     if shift == 0:
         return np.array(data)
     elif shift > 0:
-        preceeding = np.zeros(shift) if preceeding_zero else np.repeat(data[0])
+        preceeding = np.zeros(shift) if preceeding_zero else np.repeat(data[0], shift)
         
         ret = np.concatenate((preceeding, data))
         if keep_length:
