@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='prediksicovidjatim',  
-    version='0.13',
+    version='0.14',
     author="Prediksi Covid Jatim",
     author_email="prediksicovidjatim@gmail.com",
     description="Core library of prediksicovidjatim",
