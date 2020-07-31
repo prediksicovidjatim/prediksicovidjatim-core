@@ -213,11 +213,8 @@ class MapUpdater:
         chunk_size = chunk_size or self.chunk_size
         done = 0
         
-        
-        
-        
         if update:
-            features = self.fetch_kabko_feature_tanggal(layer, kabko, *geometry)
+            features = self.fetch_kabko_feature_tanggal(layer, kabko, geometry)
             to_update, update_keys = self.to_update(features, to_save)
             del features
             #gc.collect()
@@ -231,7 +228,7 @@ class MapUpdater:
         else:
             update_keys = self.fetch_kabko_feature_tanggal_scalar(layer, kabko)
             
-        to_append = self.to_append(to_save, *geometry, update_keys=update_keys)
+        to_append = self.to_append(to_save, geometry, update_keys=update_keys)
         if len(to_append) > 0:
             done2, chunk_size2 = self._save(layer, to_append, False, max_process_count=max_process_count, max_tasks_per_child=max_tasks_per_child)
             done += done2
