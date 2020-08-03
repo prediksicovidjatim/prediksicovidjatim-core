@@ -62,8 +62,13 @@ def _fetch_day_data(kabko, cur):
         WHERE kabko=%s
         ORDER BY tanggal
     """, (kabko,))
-    
-    return [DayData(*args) for args in cur.fetchall()]
+    ret = [DayData(*args) for args in cur.fetchall()]
+    while True:
+        if ret[-1].is_zero():
+            del ret[-1]
+        else:
+            break
+    return ret
         
 def fetch_param_data(kabko, cur=None):
     if cur:

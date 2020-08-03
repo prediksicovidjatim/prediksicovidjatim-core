@@ -244,6 +244,9 @@ class DayData:
         self.recovered = recovered
         self.dead = dead
         
+    def is_zero(self):
+        return self.infected == 0 and self.infectious == 0 and self.critical_cared == 0 and self.infectious_all == 0 and self.recovered == 0 and self.dead == 0
+        
 class RtData:
     def __init__(self, tanggal, init, min=None, max=None, stderr=None):
         self.tanggal = tanggal
